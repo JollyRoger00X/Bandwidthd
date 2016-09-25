@@ -1,0 +1,1054 @@
+6/11/16 Fith Install attempt
+
+6/13/16 Connectign Data Base First Attempt
+	First research on youtube shows how to create and use user accounts in postgreSQL 
+	https://www.youtube.com/watch?v=fD7x8hd9yE4
+
+	Second Resource tells how to ad latest repositories to apt-get path
+	http://tecadmin.net/install-postgresql-server-on-ubuntu/#
+
+	Commands Used
+	$ sudo su //Ubuntu cmd to become root
+	# sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
+	# wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | sudo apt-key add -
+
+	now the new repository is added update apt-get and install postgreSQL
+	# apt-get update
+	# apt-get install postgresql postgresql-contrib
+
+	//created a new db named mydb
+	create database mydb;
+	
+	//created a new user acount 
+	create user bob with password 'apassword';
+
+	
+	//change working directory to mydb
+	\c mydb;
+
+	//create a schema in that db
+	create schema friends;
+
+	//create a table within friends schema 
+	create table friends.test(firstName CHAR(15), lastName CHAR(20));
+
+6/16/2016
+	For some reason I can't log into postgresql anymore. It keeps saying I need a password 
+	but I've never put one on the postgres account
+
+	//removing all postgresql files and trying again
+	sudo apt-get --purge remove postgresql
+
+	//no success still asking for a password :(
+
+	//trying this command
+	sudo -u postgres psql
+
+	//It worked!
+	
+
+6/20/2016
+	//Been a nice few days off, Time to start once again
+
+	//as regular user
+	sudo -u postgres psql
+
+	//login successfull
+	Plan:
+		create a new postgres user 'BandwidthSensor1'
+		with password 'supersecret'
+
+		change user to BandwidthdSensor1
+		create a new database named 'BandwidthDatabase'
+
+		Quit postgres
+
+		Edit "bandwidthd.conf" in the working directory
+		
+		
+		become root in the directory with "schema.postgresql"
+		sudo su
+		psql mydb username < schema.postgresql
+
+		//hopefully I will have added the schema I need to the new database I just created
+		now back to 
+		
+
+
+	Execution
+
+	Editing bandwidthd.conf
+		changed #recover_cdf to false
+		changed #output_cdf to false
+		changed #graph to false
+
+		add these lines from the readme...
+		# Standard postgres connect string, just like php, see postgres docs for
+		# details
+		pgsql_connect_string "user = bandwidthsensor dbname = bandwidthdb host = localhost"
+		# Arbitrary sensor name, I recommend the sensors fully qualified domain
+		# name
+		sensor_id "firstsensor"
+		# Tells Bandwidthd to keep no data and preform no graphing locally
+		graph false
+		# If this is set to true Bandwidthd will try to recover the daily log 
+		# into the database.  If you set this true on purpose only do it once.
+		# Bandwidthd does not track the fact that it has already transferred 
+		# certain records into the database.
+		recover_cdf false
+
+
+	creating user pw and db
+		create user bandwidthdsensor with password 'supersecret'; 
+		//roll created!
+		
+		//to allow login
+		alter role bandwidthdsensor with login;
+		//role altered!
+
+		create database 'bandwidthdb';
+		//database created!
+
+		
+		
+
+	//Back to being root
+	
+
+
+6/22/2016 
+	//Final Exams over! next few weeks will be easy going
+	sudo su //become root
+	sudo -u postgres psql // login to postgres
+	
+	\du
+	\l
+	postgres=# grant all on database bandwidthdb to bandwidthdsensor;
+	GRANT
+
+	\q
+	//quit postgres
+	//create new user account on my machine to match postgres user name  bandwidthdsensor gave it the same pw 'supersecret'
+	
+	su bandwidthdsensor//switch to the new user
+	psql bandwidthdb//login to the postgres bandwidthdb
+	it worked!
+
+	bandwidthdb=>
+
+	\q //quit the data base and get load command from the readme
+
+	//trying to load the schema from the bandwidthd package
+	//entered p
+ 
+bandwidthdsensor@DarthWaffel:/usr/local/bandwidth2d$ psql bandwidthdb < schema.postgresql
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+
+
+	//great success!! bandwidthd's schema was loaded into the postgres database named bandwidthdb!
+
+
+	//run bandwidthd with its new configuration
+	robert@DarthWaffel:/usr/local/bandwidthd/etc$ bandwidthd
+
+	load youtube and streamed GMM for about 10 mins
+
+	//in postgres
+	moved into bandwidthdb
+
+
+
+[sudo] password for robert: 
+psql (9.5.3)
+Type "help" for help.
+
+postgres=# \l
+                                       List of databases
+    Name     |  Owner   | Encoding |   Collate   |    Ctype    |       Access privileges       
+-------------+----------+----------+-------------+-------------+-------------------------------
+ bandwidthdb | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =Tc/postgres                 +
+             |          |          |             |             | postgres=CTc/postgres        +
+             |          |          |             |             | bandwidthdsensor=CTc/postgres
+ mydb        | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ postgres    | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ template0   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres                  +
+             |          |          |             |             | postgres=CTc/postgres
+ template1   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres                  +
+             |          |          |             |             | postgres=CTc/postgres
+(5 rows)
+
+postgres=# \c bandwidthdb
+You are now connected to database "bandwidthdb" as user "postgres".
+bandwidthdb=# \l
+                                       List of databases
+    Name     |  Owner   | Encoding |   Collate   |    Ctype    |       Access privileges       
+-------------+----------+----------+-------------+-------------+-------------------------------
+ bandwidthdb | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =Tc/postgres                 +
+             |          |          |             |             | postgres=CTc/postgres        +
+             |          |          |             |             | bandwidthdsensor=CTc/postgres
+ mydb        | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ postgres    | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ template0   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres                  +
+             |          |          |             |             | postgres=CTc/postgres
+ template1   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres                  +
+             |          |          |             |             | postgres=CTc/postgres
+(5 rows)
+
+bandwidthdb=# \dt
+                  List of relations
+ Schema |      Name       | Type  |      Owner       
+--------+-----------------+-------+------------------
+ public | bd_rx_log       | table | bandwidthdsensor
+ public | bd_rx_total_log | table | bandwidthdsensor
+ public | bd_tx_log       | table | bandwidthdsensor
+ public | bd_tx_total_log | table | bandwidthdsensor
+ public | sensors         | table | bandwidthdsensor
+(5 rows)
+
+bandwidthdb=# select * from bd_rx_log;
+
+
+	but there is no data stored in any of the tables :(
+
+6/23/2016
+
+	postgres=# \du ...omited...
+
+	postgres=# \c bandwidthdb
+	You are now connected to database "bandwidthdb" as user "postgres".
+	bandwidthdb=# \du
+	 bandwidthdsensor |                                                            | {}
+	 postgres         | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
+
+	bandwidthdb=# \dt
+	 public | bd_rx_log       | table | bandwidthdsensor
+	 public | bd_rx_total_log | table | bandwidthdsensor
+	 public | bd_tx_log       | table | bandwidthdsensor
+	 public | bd_tx_total_log | table | bandwidthdsensor
+	 public | sensors         | table | bandwidthdsensor
+
+	bandwidthdb=# grant all on bd_rx_log to bandwidthdsensor;
+	GRANT
+	bandwidthdb=# grant all on bd_rx_total_log to bandwidthdsensor;
+	GRANT
+	bandwidthdb=# grant all on bd_tx_total_log to bandwidthdsensor;
+	GRANT
+	bandwidthdb=# grant all on bd_tx_log to bandwidthdsensor;
+	GRANT
+	bandwidthdb=# grant all on sensors to bandwidthdsensor;
+	GRANT
+
+
+	//granted all privliges on all tables inside bandwidthdb 
+	//still no luck no data is appearing the the tables :(
+	
+
+	//I decided to remove the database lines from the config file and make sure that the grapging functions 
+	//still were working. When I did that I thought to check my ip and found out that my local IP had changed
+	//so I edited the config file again and changed it to its new state then was able to get graph outputs 
+	//After that I went back to the config file and changed log and recover cdf to true. then restarted the 
+	//system and re - ran bandwidthd with youtube streaming for a few mins...
+
+	//Been messing with this a while now and I can't seem to get bandwidthd to output to a .cdf log;
+
+	new plan is to re-edit the config file so that log cdf is true and recover cdf is false
+	then restart the system and run bandwidthd again this way it wont try to read the old log files
+
+	then while its running I'll look for the log.0.1.cdf file to start being created in htdocs. once I see its
+	there and being written to I'll re-edit bandwidthd.conf and turn recover.cdf to true because now there is
+	a log for it to recover. Once I see the log is being kept properly then I will try to connect it to the 
+	database with log.cdf off and recover cdf true so that it can read the log into the database.
+
+	last step is to check the database for the new info. I hope I get this done today!
+
+
+	step 1; edit config to logcdf true and recover cdf false
+		restart system to wipe out last instance
+
+		:( I just can't find log the log cdf output
+
+	I tried removing bandwidthd from the usr/bin folder so that the only place the program could run from
+	was the place with the most current config file because it still seems to be graphing after I turned graph
+	output off.
+	
+	no luck, it simply wouldn't run bandwidthd without it being in the usr/bin folder 
+
+
+6/24/2016
+	
+	I've been reading the bandwidthd.c source file to try and find out how the config settings are read 
+	in but not much luck.
+	 
+	I found a function call in main called bdconfig_parse() but it only apears twice in bandwidthd.c and neither 
+	one of them defines the function idk where the definition is coming from.
+
+	this is the declaration of the function and the only other place bdconfig_parse appears in the code
+	extern int bdconfig_parse(void);
+
+6/25/2016
+	
+	new plan;
+	I'm going to remake the .bin file by compiling bandwidthd in its original environment which I renamed bandwidth2d
+	when the make command complained about the output destination being the the same as the working directory.
+
+	When I do I will include the most up to date version of bandwidthd.conf in both the make location and the install
+	location this way I'm sure it should output to a cdf log I hope not having the cdf log doesn't crash it because 
+	I'm going to turn on output to cdf and recover cdf. 
+	
+	rebuilt and replaced the config  files and the bin file but no log.cdf is appearing. Graphs have stoped though
+
+6/26/2016
+
+	//went through the system log and found the error message inside bandwidthd's output
+	
+
+	Jun 26 22:15:48 DarthWaffel bandwidthd: Monitoring subnet 50.30.240.0 with netmask 50.30.240.0
+	Jun 26 22:15:48 DarthWaffel bandwidthd: Could not open /var/run/bandwidthd.pid for write
+	Jun 26 22:15:48 DarthWaffel bandwidthd: Opening enp3s0
+	Jun 26 22:15:48 DarthWaffel bandwidthd: enp3s0: You don't have permission to capture on that device (socket: Operation not permitted)
+	Jun 26 22:17:01 DarthWaffel CRON[3362]: (root) CMD (   cd / && run-parts --report /etc/cron.hourly)
+	Jun 26 22:17:36 DarthWaffel bandwidthd: Monitoring subnet 50.30.240.0 with netmask 50.30.240.0
+	Jun 26 22:17:36 DarthWaffel bandwidthd: Opening enp3s0
+	Jun 26 22:17:36 DarthWaffel bandwidthd: Packet Encoding: Ethernet
+	Jun 26 22:19:50 DarthWaffel udisksd[1756]: Error performing housekeeping for drive /org/freedesktop/UDisks2/drives/Corsair_Neutron_GTX_SSD_152604340FF097350002: Error updating SMART data: sk_disk_smart_status: Input/output error (udisks-error-quark, 0)
+	Jun 26 22:20:57 DarthWaffel bandwidthd: Postgresql logging selected but postgresql support is not compiled into binary.  Please check the documentation in README, distributed with this software.
+
+7/3/2016
+	I got into the config files that bandwidthd uses to setup and removed most of the explinations and comments.
+	what was left over is just the instructions bandwidthd needs.
+
+	The database suport still doesn't compile so I decided to try outputting the logs as .cdf files again. 
+	The last few times I've tried it I've had no luck but perhaps running bandwidthd with less confusing stuff 
+	in the config file did helped because I found the cdf files this time!
+7/4/2016
+	Wrote a java program to parse the data in the log.1.0.cdf file. Now I can insert that data into a database
+	just need to -download  -install  -setup and troubleshoot a MySQL database real quick! 
+
+7/5/2016
+
+OBJECTIVES
+
+	7/8/2016 
+	1: save data from .cdf file into sql database 
+		~get access to an sql database to test the java
+		~create table W/ matching schema to insert data into 
+		~use java to read info from .cdf log into the sql database
+
+	7/15/2016	
+	2: write a daemon to do periodic updating of sql DB 
+
+	3: Port the whole solution to linuxOne
+		~Check if bandwidthd will run on linuxOne
+		~Check if my java will run on linuxOne
+
+
+	7/19/2016
+	4: project finished 
+
+
+	5: SHARE 8/1/2016
+
+	For some reason my-sql wouldn't install client or server
+
+	sudo su ******
+
+	apt-get install mysql-client 
+		...
+		error will not be installed due to broken package
+	same thing with mysql-server
+
+
+	urls
+	
+	http://askubuntu.com/questions/627072/problem-during-installing-mysql-server
+
+	apt-get purge mysql-client
+		...
+		error package is not installed so it cannot be removed
+	same thing with mysql-server
+
+	apt-get autoremove mysql-client
+		...
+	apt-get autoremove mysql-server
+		...
+	
+
+
+
+7/6/2016
+
+	
+	apt-get check mysql-client
+		...
+		OK
+
+	apt-get install mysql-client
+		...
+		...
+		OK
+	//idk what changed but this time the install worked!
+
+	apt-get check mysql-server
+		... OK
+	apt-get install mysql-server
+		...
+		MySQL "root" password 'bandwidth_d' 
+		...
+		OK
+
+	//now I have mysql installed on my comp its time to run the tutorial and then get ready to
+	//use java to make the insertions
+
+	//this is the location of the mysql tutorial i will be running
+	http://www.yolinux.com/TUTORIALS/LinuxTutorialMySQL.html
+
+	
+
+	step1 starting the server
+	the comand given didn't work /etc/rc.d/init.d/mysqld start
+	//got a command off another website to start the db
+		
+	http://askubuntu.com/questions/82374/how-do-i-start-stop-mysql-server
+	/etc/init.d/mysql start
+	//that one worked
+
+	root@DarthWaffel:/# mysqladmin - u root password 'bandwidth_d'
+	mysqladmin: connect to server at 'localhost' failed
+	error: 'Access denied for user 'root'@'localhost' (using password: NO)'
+
+	//using command from another website to login to the db
+	http://askubuntu.com/questions/80374/how-can-i-log-in-to-mysql
+	
+
+	root@DarthWaffel:/# mysql -u root -p
+	Enter password: *****
+
+	Welcome to the MySQL monitor.  Commands end with ; or \g.
+	Your MySQL connection id is 4
+	Server version: 5.6.30-0ubuntu0.15.10.1 (Ubuntu)
+
+	Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+
+	Oracle is a registered trademark of Oracle Corporation and/or its
+	affiliates. Other names may be trademarks of their respective
+	owners.
+
+	Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+	mysql> create database bedrock;
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> show databases;
+	+--------------------+
+	| Database           |
+	+--------------------+
+	| information_schema |
+	| bedrock            |
+	| mysql              |
+	| performance_schema |
+	+--------------------+
+
+	4 rows in set (0.00 sec)
+
+	mysql> use bedrock;
+	Database changed
+	mysql> create table employee (Name char(20),Dept char(20),jobTitle char(20));
+	Query OK, 0 rows affected (0.04 sec)
+
+	mysql> describe employee
+	    -> ;
+	+----------+----------+------+-----+---------+-------+
+	| Field    | Type     | Null | Key | Default | Extra |
+	+----------+----------+------+-----+---------+-------+
+	| Name     | char(20) | YES  |     | NULL    |       |
+	| Dept     | char(20) | YES  |     | NULL    |       |
+	| jobTitle | char(20) | YES  |     | NULL    |       |
+	+----------+----------+------+-----+---------+-------+
+	3 rows in set (0.00 sec)
+
+	mysql> show tables;
+	+-------------------+
+	| Tables_in_bedrock |
+	+-------------------+
+	| employee          |
+	+-------------------+
+	1 row in set (0.00 sec)
+
+	mysql> INSERT INTO employee VALUES ('Fred Flinstone','Quarry Worker','Rock Digger');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> INSERT INTO employee VALUES ('Wilma Flinstone','Finance','Analyst');
+	Query OK, 1 row affected (0.01 sec)
+
+	mysql> INSERT into employee values ('Barney Rubble','Sales','Neighbor');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> INSERT INTO employee VALUES ('Betty Rubble','IT','Neighbor');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from employee
+	    -> ;
+	+-----------------+---------------+-------------+
+	| Name            | Dept          | jobTitle    |
+	+-----------------+---------------+-------------+
+	| Fred Flinstone  | Quarry Worker | Rock Digger |
+	| Wilma Flinstone | Finance       | Analyst     |
+	| Barney Rubble   | Sales         | Neighbor    |
+	| Betty Rubble    | IT            | Neighbor    |
+	+-----------------+---------------+-------------+
+	4 rows in set (0.00 sec)
+
+	mysql> use mysql
+	Reading table information for completion of table and column names
+	You can turn off this feature to get a quicker startup with -A
+
+	Database changed
+	mysql> show tables;
+	+---------------------------+
+	| Tables_in_mysql           |
+	+---------------------------+
+	| columns_priv              |
+	| db                        |
+	| event                     |
+	| func                      |
+	| general_log               |
+	| help_category             |
+	| help_keyword              |
+	| help_relation             |
+	| help_topic                |
+	| innodb_index_stats        |
+	| innodb_table_stats        |
+	| ndb_binlog_index          |
+	| plugin                    |
+	| proc                      |
+	| procs_priv                |
+	| proxies_priv              |
+	| servers                   |
+	| slave_master_info         |
+	| slave_relay_log_info      |
+	| slave_worker_info         |
+	| slow_log                  |
+	| tables_priv               |
+	| time_zone                 |
+	| time_zone_leap_second     |
+	| time_zone_name            |
+	| time_zone_transition      |
+	| time_zone_transition_type |
+	| user                      |
+	+---------------------------+
+	28 rows in set (0.00 sec)
+
+	mysql> insert into user (Host, User, Password, Select_priv) values ('','Dude1',password('supersecret'),'Y');
+	Query OK, 1 row affected, 3 warnings (0.01 sec)
+
+	mysql> flush priviliges;
+	ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'priviliges' at line 1
+	mysql> flush privileges;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> grant all privileges on bedrock.* to Dude1;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> flush privileges;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> quit;
+	Bye
+
+	root@DarthWaffel:/# mysql -u Dude1 -p
+	Enter password: supersecret
+	ERROR 1045 (28000): Access denied for user 'Dude1'@'localhost' (using password: YES)
+
+	//ok since that didn't work goingto try the next part of the tutorial about inserting
+	//users into the db 
+
+
+	root@DarthWaffel:/# mysql -u root -p
+	Enter password: ***
+	Welcome to the MySQL monitor. ...
+	mysql> create user robert@'localhost' identified by 'apassword';
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> grant all privileges on bedrock.* to robert@'%';
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> flush privileges;
+	Query OK, 0 rows affected (0.00 sec)
+
+	mysql> quit;
+	Bye
+
+	
+	//Now that I have a user w access privileges I'm going to try to login and do 
+	//some stuff as that user
+
+	root@DarthWaffel:/# mysql -u robert -p
+	Enter password: ********
+
+	Welcome to the MySQL monitor.
+	mysql> show tables;
+	ERROR 1046 (3D000): No database selected
+	mysql> use bedrock
+
+	Database changed
+	mysql> show tables;
+	+-------------------+
+	| Tables_in_bedrock |
+	+-------------------+
+	| employee          |
+	+-------------------+
+	1 row in set (0.00 sec)
+
+	mysql> select * from employee;
+	+-----------------+---------------+-------------+
+	| Name            | Dept          | jobTitle    |
+	+-----------------+---------------+-------------+
+	| Fred Flinstone  | Quarry Worker | Rock Digger |
+	| Wilma Flinstone | Finance       | Analyst     |
+	| Barney Rubble   | Sales         | Neighbor    |
+	| Betty Rubble    | IT            | Neighbor    |
+	+-----------------+---------------+-------------+
+	4 rows in set (0.00 sec)
+
+	mysql> insert into employee values ('Thad','Managment','Boss');
+	Query OK, 1 row affected (0.00 sec)
+
+	mysql> select * from employees;
+	ERROR 1146 (42S02): Table 'bedrock.employees' doesn't exist
+	mysql> select * from employee;
+	+-----------------+---------------+-------------+
+	| Name            | Dept          | jobTitle    |
+	+-----------------+---------------+-------------+
+	| Fred Flinstone  | Quarry Worker | Rock Digger |
+	| Wilma Flinstone | Finance       | Analyst     |
+	| Barney Rubble   | Sales         | Neighbor    |
+	| Betty Rubble    | IT            | Neighbor    |
+	| Thad            | Managment     | Boss        |
+	+-----------------+---------------+-------------+
+	5 rows in set (0.00 sec)
+
+	mysql> use mysql
+	ERROR 1044 (42000): Access denied for user 'robert'@'localhost' to database 'mysql'
+
+	//EXELENT!! this is proof that I have a working user who can login and
+	//add stuff to a database time to make a db and schema for bandwidthd 
+
+
+	most important notes so far
+	//MySQL root password 'bandwidth_d'
+	//User robert password 'apassword'
+
+	
+
+	//time to create a database for my java to insert into 	
+	root@DarthWaffel:/# mysql -u root -p
+	Enter password: 
+	Welcome to the MySQL monitor. 
+	mysql> create database bandwidthdb;
+
+	mysql> use bandwidthdb
+	Database changed
+	mysql> create table bd_log (IP char(15), timestamp int, sent_total int, sent_icmp int, sent_udp int, sent_tcp int, sent_ftp int, sent_http int, sent_p2p int, rec_total int, rec_icmp int, rec_udp int, rec_tcp int, rec_ftp int, rec_http int, rec_p2p int);
+	Query OK, 0 rows affected (0.05 sec)
+
+	mysql> 
+	//OK my java has a table that can be inserted into and a source of data to put there. LETS TRY TO DO IT!
+
+
+	//developing Java to insert into database
+	//this link solved my connection problem
+	https://www.youtube.com/watch?v=oBeB2YqOCpU
+	
+
+	//program output ERR- User not permitted
+	mysql AS ROOT
+	mysql> grant all privileges on bandwidthdb.* to robert@'%';
+	Query OK, 0 rows affected (0.07 sec)
+
+	mysql> flush privileges;
+	Query OK, 0 rows affected (0.02 sec)
+
+	mysql> use bandwidthdb
+	Database changed
+	mysql> show tables;
+	+-----------------------+
+	| Tables_in_bandwidthdb |
+	+-----------------------+
+	| bd_log                |
+	+-----------------------+
+
+	mysql> select * from bd_log;
+	Empty set (0.02 sec)
+
+
+	//running program now!
+
+	mysql> select * from bd_log;
+	+--------------+------------+------------+-----------+----------+----------+----------+-----------+----------+-----------+----------+---------+----------+---------+----------+---------+
+	| IP           | timestamp  | sent_total | sent_icmp | sent_udp | sent_tcp | sent_ftp | sent_http | sent_p2p | rec_total | rec_icmp | rec_udp | rec_tcp  | rec_ftp | rec_http | rec_p2p |
+	+--------------+------------+------------+-----------+----------+----------+----------+-----------+----------+-----------+----------+---------+----------+---------+----------+---------+
+	| 50.30.240.86 | 1467695211 |    1765397 |      1718 |     6125 |  1757554 |        0 |   1757434 |        0 |  77128071 |        0 |   22357 | 77105714 |       0 | 77105562 |       0 |
+	| 50.30.240.86 | 1467694610 |    1734770 |      1896 |    11205 |  1721669 |        0 |   1721429 |        0 |  72939822 |        0 |   45599 | 72894223 |       0 | 72893931 |       0 |
+
+	//great success!!!
+
+7/8/16 
+	Re-configured the main method with a loop to continuously check for bandwidthd logs and read them 
+	then connect to the database and write the logs omitting any that don't meet the minimum bandwidth
+	requirements. This filter will eventually be adjustable by config file for the log reader. I added
+	a file reader that selects file from a specific directory and looks for only those with '.cdf' as
+	an extension. It will then read them into the database one by one and delete the originals. For some 
+	reason it doesn't seem to be able to delete the old log files.
+	
+
+7/11/16
+	Turns out I had to export the project as a .jar file and run it as root so that it would have permission to edit 
+	the directory.The proper name for what I'm writing is a 'daemon' which is a background process in ubuntu and other 
+	linux distros and appropriate because bandwidthd is also a daemon on the plus side this setup will allow the user 
+	to specify thier own database and table for bandwidthd's log info to be stored in. 	
+
+	I have an interesting situation happening now where I quit the terminal that my java is running in but the java 
+	keeps running in the background. This is exactly what I want to have happen BUT i don't know why its working. I 
+	thought the program would end as soon as the terminal closed.
+
+
+
+7/12/16
+	Today I split the components of my logReader program apart to get ready to 'daemonize' the application so that it will
+	stay running in the background on purpose. Its been a significant amount of work refactoring but for the most part its
+	ready to be instanciated as a daemon, I'm refrencing 
+	http://www.neilson.co.za/creating-a-java-daemon-system-service-for-debian-using-apache-commons-jsvc/ 
+	for a basic daemon tutorial, so far it seem very much like basic Threading
+
+	root@DarthWaffel:/# apt-get install jsvc
+
+	//system restart so eclipse won't feel neglected 
+
+	//no luck the project still doesn't recognize the interface :(
+
+	http://commons.apache.org/proper/commons-daemon/jsvc.html
+	//says I have to build the configure program with the command 
+	'sh support/buildconf.sh' 
+
+
+	//downloaded the src.tar.gz files in order to run the ./configure command hoping 
+	http://commons.apache.org/proper/commons-daemon/download_daemon.cgi
+
+	root@DarthWaffel:/home/robert/Downloads/commons-daemon-1.0.15-src/src/native/unix# ./configure
+	//worked fine however I still have no idea where the eclipse sdk is looking for the jdk
+
+	root@DarthWaffel:/home/robert/Downloads/commons-daemon-1.0.15-src/src/native/unix# whereis java
+	java: /usr/bin/java /usr/lib/java /usr/share/java /usr/share/man/man1/java.1.gz
+	root@DarthWaffel:/home/robert/Downloads/commons-daemon-1.0.15-src/src/native/unix# 
+	./configure --with-java=/usr/lib/java
+
+
+	//since there are three places it might look i'm going to try making it install to /usr/share/java then copy.bin file to the
+	//usr
+
+
+
+7/16/16
+	The thread is continuing to run in the background although its still not completly on purpose
+	today I'm going to first focus on loading settings and info into LogReader through a file I'm
+	going to make bandwidthd's path the argument to LogReader and put the logreader config file in
+	with bandwidthd's directory 
+	
+
+7/17/16
+	After reading another tutorial on stack overflow I found out that java has a built in setDaemon(bool)
+	command that can be applied to a running instance of a thread. I turned it to true and the program worked 
+	fantastically! I'm adding another argument option to my daemon which will let the user specify where bd's
+	logs are as the first argument and where "LogReader.conf" is as the second argument.
+
+7/18/16
+	For some reason my daemon seems to have stopped working when I turn isDaemon() to true on the thread.
+	I have no idea what to make of it, if I set it to false the program stops as soon as the window closes.
+	If I set it to true then it doesn't delete the logs or send them to the database. But if I set it true 
+	and call run() instead of start() it will continue in the background after the terminal closes. This 
+	comes from alot of testing :(
+
+7/19/16
+	Well its project finished time
+
+7/21/16 
+	Just got a reply from the head of the project and it turn out that sudo should do everything we want it to
+	so now its a last moment scramble to to get everything ported to our LinuxOne image. So now its time to rush 
+	like my future depends on it! 
+	
+	So the plan to port bandwidthd and Complete the project:
+		1	Download and install ssh client and use it to connect to the image 
+		2	Install bandwidthd dependencies
+		3	Install bandwidthd
+		4	Install logReader daemon
+		5	Provide my IP and database login info on the LinuxOne image so it can send records to my pc
+
+	Tonight 
+		download and install ssh was really easy, its already installed. 
+		So ssh 
+
+
+To copy a file from B to A while logged into B:
+
+scp /path/to/file username@a:/path/to/destination
+
+To copy a file from B to A while logged into A:
+
+scp username@b:/path/to/file /path/to/destination
+
+
+
+7/22/16
+	Shine on crazy diamond!
+	Used ubuntu putty to get into the suse server and transfered bandwidthd and its dependencies to LinuxOne
+	
+
+	libgd ./configure 
+	done
+	make install
+	done
+
+	libpcap ./configure
+	done
+	make install
+	done
+
+	tcpdump ./configure
+	done
+	make install
+	done
+
+	down to lib png
+	./configure
+	error zlib not installed
+
+	downloaded zlib from http://www.zlib.net/
+	ssh it to my server
+	unpack it and go into its directory
+	sudo ./configure
+	done
+	sudo make install
+	done
+
+	back to libpng
+	sudo ./configure 
+	done
+	sudo make install
+	done
+
+	ON TO BANDWIDTHD BABY
+
+	sudo ./configure
+	done
+	sudo make install
+	done
+	//went to /usr/local/bandwidthd/ and copied the bin file into /usr/bin/
+
+	editing the conf file
+******************************************
+	subnet 148.100.111.60 255.255.255.0
+
+	dev "Ethernet" //i am pretty sure this is right its the first line in link under /sbin/ifconfig
+
+	skip_intervals 0
+
+	graph_cutoff 1024
+
+	promiscuous true
+
+	output_cdf true
+
+	recover_cdf true
+
+	graph false
+
+	filter "ip"
+
+	meta_refresh 150
+********************************************
+
+7/23/16
+
+	Tried to run the program but got an error saying the the bin file could not be executed turns out
+	bandwidthd did not compile on being made to install because I had transfered the environment from my
+	ubuntu system with the built bandwidthd in place.
+
+	I removed the bin from the bin lib and from the project 
+	>sudo rm /usr/bin/bandwidthd
+
+	Also removed the old installation folder of bandwidthd
+	/usr/local> sudo rm -r bandwidthd
+
+	Then moved to the directory I sent in from my ubuntu environment
+	/home/linux1/bandwidth2d:/> sudo make clean
+				:/> sudo ./configure
+				:/> sudo make bandwidthd
+				compiler error graph.c:421 and graph.c:416 undefined refrence to gdImagePng
+
+	commented out those 2 lines
+	we aren't trying to draw graphs right now we just want it in cdf logs so my java can grab it
+
+	second compiler error 
+	this time the function definition of HostIp2CharIp that I added to bandwidthd.h was causing it
+	I left the prototype in bandwidthd.h where it had originally been and uncommented the definition
+	inside bandwidthd.c
+
+	third compile did it
+	got a working bin then ran make install and it went fine
+	changed to /usr/local/bandwidthd/ and copied bandwidthd to the /urs/bin/ folder
+	changed to / 
+	linux1@bdsusehost:/> bandwidthd
+	bandwidthd: error while loading shared libraries: libpng.so.16: cannot open shared object file: No such file or directory
+
+	I will continue tommorow
+7/24/16
+	
+	trying to run bandwidthd now gives this error 
+	bandwidthd: error while loading shared libraries: libpng.so.16: cannot open shared object file: No such file or directory
+
+	//so I went to the root directory and searched for files with the right name and found 2
+	linux1@bdsusehost:/>sudo find / -name "libpng16.so.16"
+	/usr/local/lib/libpng16.so.16
+	/home/linux1/libpng-1.6.22/.libs/libpng16.so.16
+
+	//this website had some very good info
+	http://stackoverflow.com/questions/22222666/error-while-loading-shared-libraries-libgsl-so-0-cannot-open-shared-object-fil?noredirect=1&lq=1
+	linux1@bdsusehost:/>sudo gedit /etc/ld.so.conf added /usr/local/lib	
+	linux1@bdsusehost:/>sudo /sbin/ldconfig
+	linux1@bdsusehost:/>sudo bandwidthd
+	
+
+	//IT RAN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	moved a few zip files with csp then checked the output directory for .cdf logs but no luck
+	had to search for the suse equivelant of syslog in my ubuntu environ
+	turns out its 
+	/var/log/messages
+	that holds the error output
+
+	the problem is that "Ethernet" is not a recognized device
+	so I need to find the name of the machiens network interface
+
+	After looking through like 3 fourms I decided to guess that the name of the device was "eth0"
+	and happened to be right!!!! I'm going to move some more stuff with scp and check to see if 
+	bandwidthd starts making logs 
+	
+	IT DID IT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	the cdf log was created now I just have to add java to the machien and my grabber shouldd do the rest!
+
+7/25/16
+	gettign java installed on this thing is proving to be jsut as time consuming as bandwidthd
+
+	documentation and download
+	https://iwm.dhe.ibm.com/sdfdl/1v2/regs2/linuxjavasdks/java/java8/8/0/3/10/linuxz64/Xa.2/Xb.N2_vvPzUu_EDLvLs2bA_SWWBYzmbq_QfHdRAtu0xTVI/Xc.8/0/3/10/linuxz64/readme.txt/Xd./Xf.LPr.D1vk/Xg.8714869/Xi.swg-sdk8/XY.regsrvs/XZ.n29Pr7e837M5ISGestr124JceFA/readme.txtn
+	https://www.ibm.com/support/knowledgecenter/SSPREK_7.0.0/com.ibm.isam.doc_70/ameb_upgrade_guide/task/tsk_jrte_linz.html
+	https://www-01.ibm.com/marketing/iwm/iwm/web/acceptSignup.do?source=swg-sdk8&amp;lang=en_US&S_TACT=SWG-SDK8&S_PKG=zseries64_8.0.3.10
+	this is where I downloaded the java SDK from ibm to run on LinuxOne on s390x architecture	
+
+	https://sourceforge.net/projects/p7zip/?source=typ_redirect
+	For some reason I'll never know transfering large files with ssh is very prone to getting stalled and stopped
+	it seems anything more than a couple Mb and the connection gets upset and throws a tantrum. I ended up having to
+	use 7zip to break my install file up into 47 3Mb pices and moves them in 7 seprate threads accross to the server
+	now I also have to transfer the 7z package in order to get the archive unziped. God help me though its 5Mb and
+	with the threads having functional meltdowns reliably after 3.5Mb I can only sit hoping the next transfer will 
+	work I'm up to 3 tries now.
+	
+	Finally got 7zip across and installed.
+
+	After that I used it to unzip the 47 parts of ibm-java-s390x-sdk-8.0-3.10.bin.7z.001 and then renamed the file ibmjava
+	then ran 
+	linux1@bdsusehost:/home/linux1>chmod a+x ibmjava
+
+	JAVA installed!
+	added java's bin to the local shared libraries by adding
+	>sudo nano /etc/ld.so.conf
+	added the line 
+	/opt/ibm/java-s390x-80/jre/bin
+
+	>sudo /sbin/ldconfig
+	
+	for some reason it still not in the default path :(
+	had to configure the path with
+	export PATH=/opt/ibm/java-s390x-80/jre/bin:$PATH
+7/26/16
+	
+	community-mysql-5.7.11-2.fc24.s390x.rpm
+	is the driver I am using to try and make connection from linuxOne to my pc
+	>sudo rpm -i community-mysql-5.7.11-2.fc24.s390x.rpm
+	package failed to install missin dependencies
+
+	
+	NEEDS 7 additional libraries
+	community-mysql-common(s390-64) = 5.7.11-2.fc24
+	libcrupto.so.10()(64bit)
+	libcrypto.so.10(libcrypto.so.10)(64bit)
+	libedit.so.0()(64bit)
+	libz4.so.1()(64bit)
+	libssl.so.10(libssl.so.10)(64bit)
+	rpmlib(FileDigests) <= 4.6.0-1
+
+
+	Downloading them all starting with the first on the list
+	community-mysql-common(s390-64) = 5.7.11-2.fc24
+	ftp://www.rpmfind.net/linux/RPM/fedora/24/s390x/c/community-mysql-common-5.7.11-2.fc24.s390x.html
+
+	lets just try to install it immediatly
+	>sudo rpm -i community-mysql-common-5.7.11-2.fc24.s390x.rpm
+	
+	failed to install missing dependency rpmlib(FileDigests)<= 4.6.0-1 is needed by community community-mysql-common-5.7.11-2.fc24.s390x
+	looked it up; i dont need to try running a fedora rpm on a suse system duh lol
+
+	checking /var/log/messages for errors
+
+	no error messages and I can't figure out why the connection keeps getting refused...
+	I'm goin to re-write the java into a client server setup and try to transmit that way,
+	I need to do a test case tonight before I actually change anything in the daemon files 
+	Also branched the project by compressing a copy of the workspace.
+
+	I'm going to use my code from "Squaremagon" to quickly get a server and client running 
+
+	Success!! I have a server client simple chat setup going from ubuntu to linuxOne suse. Next task 
+	is to use the existing code to make each pice do its job.
+
+7/27/16
+	After a few failed tests everything seems to be going well!
+
+	Because of earlier refactorings I was able to make each pice function on its own failry easily.
+	I had a moment of confusion in shipping the data because I was removing the commas from it to make its easier 
+	for my scanner to pick out the numbers and parse them into integers and I didn't want to remove the commas 
+	and then put them back. Though in order for filtering of low or 0 bandwidhd traffic to take place on client
+	side I have to read the numbers from the log file removing the commas and then just put them right back for 
+	going over the network.
+
+	Transmitting files from  client to server is happening!!
+ 	I have data stored on my local machien from traffic on the linuxOne server!
+	right now neihter one shuts down cleanly or has much configurability. Both client and server need thier own conf files
+	so that they can be configured, started, and stoped.
+
+	Though there aren't many log entries develoging the software took a while more tommorow..
+	
+
+7/28/16
+	
+	I'm packageing what I have and sending it to my mentor and myself so that we will both have a copy of the finished
+	product. I need to spend another hour or two fixing up the program around the edges I am going to mail him the current 
+	version of everything now and then another version later when I have all the bugs fixed.
+	
+	He also asked if I could run the sql server on LinuxOne and after some searching I found no links to an sql server for 
+	suse that woud compile on s390x
+	
+	I am confident that if I could find a mysql server for s390x than my java would have no problem inserting data into it.
+	The same setup is on my ubuntu machien, with java application doing all the background transmission and finding the 
+	data and the plugin I wrote inserts it using java which runs on both systems. 
+	

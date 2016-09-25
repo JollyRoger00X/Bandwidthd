@@ -1,0 +1,19 @@
+This is more of an experimental version than at this point; 
+It requires several dependencies (libpng libpgd) for drawing graphs but does not produce them.
+Comming soon I will remove the graphing and built in database support leaving only moniroting-logging functionality. Then wrap the streamlined version and source files into an rpm for easy download and install. The core dependency is libpcap which will also need to be installed prior to installing bandwidthd. Additionally installing it on Z Linux will require one extra library, zlib which is also included.
+
+That said, this version still requires libgd libpng, libpcap, and zlib. I've also included nano in this repo because it was a huge help to me while working on this project.
+
+So to make bandwidthd install and run first install all of the included dependencies then this version. 
+Edit bandwidthd's config file to match your numbers. One of the most important fields is the device name on my Suse vm was 'eth0'. Once its running you should start to see files like log.0.1.cdf appearing in its directory.
+
+Next to add my database daemon you'll have to install the included ibm-java-s390x-sdk package. 
+Because I ended up having to split the original bin file into parts several times I've included pz7ip for re-assembeling the java installer. 
+Once the installer is unzipped it will run naturally on Z Linux.
+
+The daemons included are for reading the output logs and transfering them to a database. At the moment they only communicate in one mode which is online but in later versions I will include support for direct communication between the client (reader) and server (logger)
+
+The client has a config file that needs to be located in /usr/local/bandwidthd/etc/ it needs to be edited with specifics about the server
+The server also has a config file that needs to be located in the same directory as the .jar file its config file contains info about the database it can insert into and the username password it will use to insert data.
+
+Either the client or server can be stopped manually by editing the last line in thier config files. Once the program reads the 'stop' command it will over write it with the 'Go' so that the next time the daemon is called it will be able to run.
